@@ -1,0 +1,68 @@
+From 46b84b32aa573fc9491576116f10d99a9dfc0818 Mon Sep 17 00:00:00 2001
+From: Mike FABIAN <mfabian@redhat.com>
+Date: Sat, 9 Apr 2016 08:24:35 +0200
+Subject: [PATCH] Call IBus.Bus() in __main__, not in __init__ of class SetupUI
+
+On Fedora 24, when calling IBus.Bus().config() in __init_of class
+SetupUI, it returns None. When calling IBus.Bus() in __main__, passing
+the result as an argument to __init__ of SetupUI and then calling
+config(), it works. On Fedora 23, both work.
+
+Resolves: rhbz#1325338 - [abrt] ibus-typing-booster: main.py:166:__init__:AttributeError: 'NoneType' object has no attribute 'get_value'
+See: https://bugzilla.redhat.com/show_bug.cgi?id=1325338
+
+The same problem occurs on RHEL-7.4:
+
+Resolves: rhbz#1447332 - [ibus-typing-booster] Crash observed while opening typing-booster settings from region and language page.
+See: https://bugzilla.redhat.com/show_bug.cgi?id=1447332
+---
+ ibus-typing-booster/setup/main.py | 20 +++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/ibus-typing-booster/setup/main.py b/ibus-typing-booster/setup/main.py
+index 8dd905d..9fc3141 100644
+--- a/ibus-typing-booster/setup/main.py
++++ b/ibus-typing-booster/setup/main.py
+@@ -57,7 +57,7 @@ from gi.repository import GLib
+ from pkginstall import InstallPkg
+ 
+ class SetupUI:
+-    def __init__(self):
++    def __init__(self, bus):
+         filename = path.join(path.dirname(__file__),"setup.glade")
+         self.builder = Gtk.Builder()
+         self.builder.set_translation_domain(DOMAINNAME)
+@@ -109,12 +109,9 @@ class SetupUI:
+         self.config_section = "engine/typing-booster/%s" % self.name
+         self.hunspell_dict_package = self.tabsqlitedb.ime_properties.get('hunspell_dict_package')
+         self.symbol = self.tabsqlitedb.ime_properties.get('symbol')
+-        if IBus.get_address() == None:
+-            self.__run_message_dialog(_("ibus is not running."), Gtk.MessageType.ERROR)
+-            sys.exit(1)
+-            return
+ 
+-        self.config = IBus.Bus().get_config()
++        self.bus = bus
++        self.config = self.bus.get_config()
+         maindialog = self.builder.get_object("main_dialog")
+         maindialog.set_title(_("Preferences for ibus-typing-booster \"%(symbol)s\"") %{'symbol': self.symbol})
+         maindialog.show()
+@@ -341,5 +338,14 @@ if __name__ == '__main__':
+         print >> sys.stderr, "IBUS-WARNING **: Using the fallback 'C' locale"
+         locale.setlocale(locale.LC_ALL, 'C')
+     i18n_init()
+-    SetupUi = SetupUI()
++    if IBus.get_address() == None:
++        dlg = Gtk.MessageDialog(
++            flags = Gtk.DialogFlags.MODAL,
++            message_type = Gtk.MessageType.ERROR,
++            buttons = Gtk.ButtonsType.OK,
++            message_format = _('ibus is not running.'))
++        dlg.run()
++        dlg.destroy()
++        sys.exit(1)
++    SetupUi = SetupUI(IBus.Bus())
+     Gtk.main()
+-- 
+2.9.4
+

@@ -1,12 +1,13 @@
 Name:       ibus-typing-booster
 Version:    1.2.3
-Release:    4%{?dist}
+Release:    5%{?dist}
 Summary:    A typing booster engine for the IBus platform
 License:    GPLv3+
 Group:      System Environment/Libraries
 URL:        http://git.fedorahosted.org/git/?p=ibus-typing-booster.git
 Source0:    https://fedorahosted.org/releases/i/b/ibus-typing-booster/%{name}-%{version}.tar.gz
 Patch0:     Commit-candidate-clicked-on-with-the-mouse.patch
+Patch1:     0001-Call-IBus.Bus-in-__main__-not-in-__init__-of-class-S.patch
 Requires:   ibus
 Requires:   libtranslit-m17n
 BuildRequires:  ibus-devel,libtranslit-devel
@@ -55,6 +56,7 @@ The Typing Booster engine for IBus platform.
 %prep
 %setup -q
 %patch0 -p2 -b .Commit-candidate-clicked-on-with-the-mouse
+%patch1 -p2 -b .0001-Call-IBus.Bus-in-__main__-not-in-__init__-of-class-S
 
 %build
 %configure --disable-static --disable-additional
@@ -75,6 +77,10 @@ make install DESTDIR=${RPM_BUILD_ROOT} NO_INDEX=true  INSTALL="install -p"   pkg
 %{_datadir}/applications/ibus-setup-typing-booster.desktop
 
 %changelog
+* Mon May 22 2017 Mike FABIAN <mfabian@redhat.com> - 1.2.3-5
+- Call IBus.Bus() in __main__, not in __init__ of class SetupUI
+- Resolves: rhbz#1447332
+
 * Fri Jan 10 2014 Mike FABIAN <mfabian@redhat.com> - 1.2.3-4
 - Commit candidate clicked on with the mouse (Related: rhbz#1038521)
 
