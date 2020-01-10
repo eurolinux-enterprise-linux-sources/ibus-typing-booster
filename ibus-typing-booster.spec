@@ -1,11 +1,12 @@
 Name:       ibus-typing-booster
 Version:    1.2.3
-Release:    2%{?dist}
+Release:    4%{?dist}
 Summary:    A typing booster engine for the IBus platform
 License:    GPLv3+
 Group:      System Environment/Libraries
 URL:        http://git.fedorahosted.org/git/?p=ibus-typing-booster.git
 Source0:    https://fedorahosted.org/releases/i/b/ibus-typing-booster/%{name}-%{version}.tar.gz
+Patch0:     Commit-candidate-clicked-on-with-the-mouse.patch
 Requires:   ibus
 Requires:   libtranslit-m17n
 BuildRequires:  ibus-devel,libtranslit-devel
@@ -53,7 +54,7 @@ The Typing Booster engine for IBus platform.
 
 %prep
 %setup -q
-
+%patch0 -p2 -b .Commit-candidate-clicked-on-with-the-mouse
 
 %build
 %configure --disable-static --disable-additional
@@ -74,6 +75,12 @@ make install DESTDIR=${RPM_BUILD_ROOT} NO_INDEX=true  INSTALL="install -p"   pkg
 %{_datadir}/applications/ibus-setup-typing-booster.desktop
 
 %changelog
+* Fri Jan 10 2014 Mike FABIAN <mfabian@redhat.com> - 1.2.3-4
+- Commit candidate clicked on with the mouse (Related: rhbz#1038521)
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.2.3-3
+- Mass rebuild 2013-12-27
+
 * Tue Aug 06 2013 Mike FABIAN <mfabian@redhat.com> - 1.2.3-1
 - Update to 1.2.3 upstream version
 - Fix exception handling when trying to install a rpm package (Resolves: rhbz#986178)
